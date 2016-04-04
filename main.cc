@@ -193,7 +193,7 @@ float angle(float x1, float y1, float z1, float x2, float y2, float z2) {
 }
 
 Vector2 getTriangleVertex(triangle tri, std::size_t vertex) {
-  return { tri.v[vertex].x, tri.v[vertex].y };
+  return { (int)tri.v[vertex].x, (int)tri.v[vertex].y };
 }
 
 void drawtriangle(triangle tri) {
