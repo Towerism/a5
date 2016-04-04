@@ -1,7 +1,21 @@
-#include<GL/glut.h>
-#include<iostream>
-#include<fstream>
-#include<math.h>
+#include "scan/activeEdgeList.hh"
+#include "scan/activeEdgeTable.hh"
+#include "scan/color.hh"
+#include "scan/edge.hh"
+#include "scan/polygon.hh"
+#include "util/vector2.hh"
+
+#include <algorithm>
+#include <fstream>
+#include <GL/glut.h>
+#include <iostream>
+#include <list>
+#include <limits>
+#include <math.h>
+#include <random>
+#include <string>
+#include <utility>
+#include <vector>
 
 using namespace std;
 
@@ -33,10 +47,10 @@ using namespace std;
 float framebuffer[ImageH][ImageW][3];
 float ZMAX = 10000.0;	// NOTE: Assume no point has a Z value greater than 10000.0
 
-char* sourcefile="triangle.dat";
+std::string sourcefile="triangle.dat";
 
 struct color {
-  float r, g, b;		// Color (R,G,B values)
+  float r, g, b;
 };
 
 struct vertex {
@@ -106,30 +120,50 @@ void drawit(void)
   glFlush();
 }
 
-// Sets pixel x,y to the color RGB
-void setFramebuffer(int x, int y, float R, float G, float B)
-{
-  if (R<=1.0)
-    if (R>=0.0)
-      framebuffer[x][y][0]=R;
-    else
-      framebuffer[x][y][0]=0.0;
-  else
-    framebuffer[x][y][0]=1.0;
-  if (G<=1.0)
-    if (G>=0.0)
-      framebuffer[x][y][1]=G;
-    else
-      framebuffer[x][y][1]=0.0;
-  else
-    framebuffer[x][y][1]=1.0;
-  if (B<=1.0)
-    if (B>=0.0)
-      framebuffer[x][y][2]=B;
-    else
-      framebuffer[x][y][2]=0.0;
-  else
-    framebuffer[x][y][2]=1.0;
+float clampFloat(float f) {
+  if (f < 0.0)
+    return 0.0;
+  if (f > 1.0)
+    return 1.0;
+  return f;
+}
+
+// make sure color values are between 0 and 1
+Color clampColorValues(Color color) {
+  return { clampFloat(color.r), clampFloat(color.g), clampFloat(color.b) };
+}
+
+// Sets pixel x, y to the color RGB
+// I've made a small change to this function to make the pixels match
+// those returned by the glutMouseFunc exactly - Scott Schaefer 
+// Made the function less ugly - Martin Fracker
+void setFramebuffer(Vector2 position, Color color) {
+  // changes the origin from the lower-left corner to the upper-left corner
+  position.y = ImageH - 1 - position.y;
+  framebuffer[position.y][position.x][0] = color.r;
+  framebuffer[position.y][position.x][1] = color.g;
+  framebuffer[position.y][position.x][2] = color.b;
+}
+
+void drawScanLine(int y, int startX, int endX, Color color) {
+  for (int x = startX; x < endX - 1; ++x) {
+    setFramebuffer({x, y}, color);
+  }
+}
+
+void scanfill(std::vector<Vector2> points, Color color) {
+  std::list<Edge> edges = makeEdges(points);
+  ActiveEdgeTable edgeTable = makeActiveEdgeTable(edges);
+  ActiveEdgeList edgeList(findMinYFromEdges(edges));
+  for (auto list : edgeTable) {
+    edgeList.add(list);
+    for (std::size_t i = 0; i < edgeList.size(); i += 2) {
+      drawScanLine(edgeList.getCurrentY(),
+                   edgeList[i].currentX,
+                   edgeList[i + 1].currentX,
+                   color);
+    }
+  }
 }
 
 // Normalizes the vector passed in
@@ -158,14 +192,22 @@ float angle(float x1, float y1, float z1, float x2, float y2, float z2) {
   return  acos(dot(x1,y1,z1,x2,y2,z2));
 }
 
+Vector2 getTriangleVertex(triangle tri, std::size_t vertex) {
+  return { tri.v[vertex].x, tri.v[vertex].y };
+}
 
 void drawtriangle(triangle tri) {
-
+  std::vector<Vector2> points = { getTriangleVertex(tri, 0),
+                                  getTriangleVertex(tri, 1),
+                                  getTriangleVertex(tri, 2) };
+  scanfill(points, { 1.0, 1.0, 1.0 });
 }
 
 void display(void)
 {
-  /* Your routine here */
+  for (int i = 0; i < numtriangles; ++i) {
+    drawtriangle(trianglelist[i]);
+  }
 
   drawit();
 }
