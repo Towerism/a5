@@ -13,16 +13,17 @@
 #include <vector>
 
 #include "edge.hh"
+#include "util/vector3.hh"
 
 struct ActiveEdgeList {
-  ActiveEdgeList(int startingY) : currentY(startingY - 1) {}
+  ActiveEdgeList(int startingY) : currentY(startingY) {}
 
   void add(std::list<Edge> newedges) {
     ++currentY;
     if (!newedges.empty())
       edges.insert(edges.end(), newedges.begin(), newedges.end());
     prune();
-    incrementX();
+    increment();
     sort();
   }
 
@@ -51,9 +52,10 @@ private:
     }
   }
 
-  void incrementX() {
+  void increment() {
     for (auto& edge : edges) {
       edge.currentX += edge.xIncr;
+      edge.currentZ += edge.zIncr;
     }
   }
 

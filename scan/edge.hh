@@ -10,13 +10,13 @@
 
 #include <iostream>
 
-#include "util/vector2.hh"
+#include "util/vector3.hh"
 
 struct Edge {
-  Vector2 start;
-  Vector2 end;
+  Vector3 start;
+  Vector3 end;
   int maxY;
-  float currentX, xIncr;
+  float currentX, xIncr, currentZ, zIncr;
 };
 
 template <typename iterable>
@@ -24,11 +24,13 @@ void printEdges(iterable edges) {
   std::cout << "BEGIN EDGES" << std::endl;
   for (auto edge : edges) {
     std::cout << "  BEGIN EDGE" << std::endl;
-    std::cout << "    START: ( " << edge.start.x << ", " << edge.start.y << " )" << std::endl;
-    std::cout << "    END: ( " << edge.end.x << ", " << edge.end.y << " )" << std::endl;
+    std::cout << "    START: ( " << edge.start.x << ", " << edge.start.y <<  ", " << edge.start.z <<" )" << std::endl;
+    std::cout << "    END: ( " << edge.end.x << ", " << edge.end.y << ", " << edge.end.z << " )" << std::endl;
     std::cout << "    MAXY: " << edge.maxY << std::endl;
-    std::cout << "    CURRENTX: " << edge.currentX << std::endl;
+    std::cout << "    CURRENTZ: " << edge.currentX << std::endl;
     std::cout << "    XINCR: " << edge.xIncr << std::endl;
+    std::cout << "    CURRENTZ: " << edge.currentZ << std::endl;
+    std::cout << "    ZINCR: " << edge.zIncr << std::endl;
     std::cout << "  END EDGE" << std::endl;
   }
   std::cout << "END EDGES" << std::endl;

@@ -46,6 +46,10 @@ using namespace std;
 
 float framebuffer[ImageH][ImageW][3];
 float ZMAX = 10000.0;	// NOTE: Assume no point has a Z value greater than 10000.0
+float zbuffer[ImageH][ImageW];
+
+std::default_random_engine generator;
+std::uniform_real_distribution<float> distribution(0.0, 1.0);
 
 std::string sourcefile="triangle.dat";
 
@@ -137,30 +141,61 @@ Color clampColorValues(Color color) {
 // I've made a small change to this function to make the pixels match
 // those returned by the glutMouseFunc exactly - Scott Schaefer 
 // Made the function less ugly - Martin Fracker
+
+void repositionOrigin(Vector2& position) {
+  position.y = ImageH - 1 - position.y;
+}
+
 void setFramebuffer(Vector2 position, Color color) {
   // changes the origin from the lower-left corner to the upper-left corner
-  position.y = ImageH - 1 - position.y;
+  repositionOrigin(position);
   framebuffer[position.y][position.x][0] = color.r;
   framebuffer[position.y][position.x][1] = color.g;
   framebuffer[position.y][position.x][2] = color.b;
 }
 
-void drawScanLine(int y, int startX, int endX, Color color) {
-  for (int x = startX; x < endX - 1; ++x) {
-    setFramebuffer({x, y}, color);
-  }
+void setZbuffer(Vector2 position, float depth) {
+  repositionOrigin(position);
+  zbuffer[position.y][position.x] = depth;
 }
 
-void scanfill(std::vector<Vector2> points, Color color) {
+int getDepth(Vector2 position) {
+  repositionOrigin(position);
+  return zbuffer[position.y][position.x];
+}
+
+void drawScanLine(int y, int startX, int endX, int startZ, Vector3 normal, Color color) {
+  // std::cout << "drawScanLineBEGIN!!!!!!!!!!!!!!" << std::endl;
+  float z = startZ;
+  // std::cout << "startZ: " << z << std::endl;
+  for (int x = startX; x < endX - 1; ++x, z -= normal.x / normal.z) {
+    // std::cout << "Z: " << z << ", ";
+    if (z < getDepth({x, y})) {
+      setZbuffer({x, y}, z);
+      setFramebuffer({x, y}, color);
+    } else {
+      // std::cout << "!! Z REJECTED: " << z << "!! ";
+    }
+  }
+  // std::cout << "\n!!!!!!!!!!!!!!drawScanLineEND" << std::endl;
+}
+
+void scanfill(std::vector<Vector3> points, Color color) {
   std::list<Edge> edges = makeEdges(points);
+  printEdges(edges);
   ActiveEdgeTable edgeTable = makeActiveEdgeTable(edges);
   ActiveEdgeList edgeList(findMinYFromEdges(edges));
+  Vector3 normal = calculateNormal(edges);
+  std::cout << "Normal: " << normal.x
+            << ", " << normal.y << ", " << normal.z << std::endl;
   for (auto list : edgeTable) {
     edgeList.add(list);
     for (std::size_t i = 0; i < edgeList.size(); i += 2) {
       drawScanLine(edgeList.getCurrentY(),
                    edgeList[i].currentX,
                    edgeList[i + 1].currentX,
+                   edgeList[i].currentZ,
+                   normal,
                    color);
     }
   }
@@ -192,15 +227,23 @@ float angle(float x1, float y1, float z1, float x2, float y2, float z2) {
   return  acos(dot(x1,y1,z1,x2,y2,z2));
 }
 
-Vector2 getTriangleVertex(triangle tri, std::size_t vertex) {
-  return { (int)tri.v[vertex].x, (int)tri.v[vertex].y };
+Vector3 getTriangleVertex(triangle tri, std::size_t vertex) {
+  return { tri.v[vertex].x, tri.v[vertex].y, tri.v[vertex].z };
+}
+
+Color randomColor() {
+  Color color;
+  color.r = distribution(generator);
+  color.g = distribution(generator);
+  color.b = distribution(generator);
+  return color;
 }
 
 void drawtriangle(triangle tri) {
-  std::vector<Vector2> points = { getTriangleVertex(tri, 0),
+  std::vector<Vector3> points = { getTriangleVertex(tri, 0),
                                   getTriangleVertex(tri, 1),
                                   getTriangleVertex(tri, 2) };
-  scanfill(points, { 1.0, 1.0, 1.0 });
+  scanfill(points, randomColor());
 }
 
 void display(void)
@@ -222,6 +265,7 @@ void init(void)
       framebuffer[i][j][0] = 0.0;
       framebuffer[i][j][1] = 0.0;
       framebuffer[i][j][2] = 0.0;
+      zbuffer[i][j] = ZMAX;
     }
   }
 

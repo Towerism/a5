@@ -8,11 +8,14 @@
 
 #pragma once
 
+#include <cmath>
 #include <vector>
 #include <list>
 
 #include "color.hh"
 #include "edge.hh"
+#include "util/vector2.hh"
+#include "util/vector3.hh"
 
 struct ActiveEdgeTable {
   ActiveEdgeTable(Vector2 rangeY)
@@ -56,13 +59,39 @@ inline void calculateXIncr(Edge& edge) {
   edge.xIncr = deltaX / deltaY;
 }
 
-inline void setEndPoint(Edge& edge, Vector2 point) {
+inline Vector3 calculateNormal(std::list<Edge> edges) {
+  auto iter = edges.begin();
+  Vector3 vertex1 = iter->start;
+  Vector3 vertex2 = iter->end;
+  ++iter;
+  Vector3 vertex3 = iter->end;
+
+  Vector3 u = vertex3 - vertex1;
+  Vector3 v = vertex2 - vertex1;
+  Vector3 normal = cross(u, v);
+
+  return normalize(normal);
+}
+
+inline void setEndPoint(Edge& edge, Vector3 point) {
   edge.end = point;
   makeStartBelowEnd(edge);
   calculateXIncr(edge);
 }
 
-inline std::list<Edge> makeEdges(std::vector<Vector2> points) {
+inline void calculateZIncr(Edge& edge, Vector3 normal) {
+  edge.zIncr = -normal.y / normal.z;
+}
+
+inline void applyNormal(std::list<Edge>& edges) {
+  Vector3 normal = calculateNormal(edges);
+  for (auto& edge : edges) {
+    calculateZIncr(edge, normal);
+    edge.currentZ = edge.start.z;
+  }
+}
+
+inline std::list<Edge> makeEdges(std::vector<Vector3> points) {
   std::list<Edge> edges;
   for (std::size_t i = 0; i < points.size(); ++i) {
     edges.push_back({ points[i] });
@@ -71,6 +100,7 @@ inline std::list<Edge> makeEdges(std::vector<Vector2> points) {
     }
   }
   setEndPoint(edges.back(), points.front());
+  applyNormal(edges);
   return edges;
 }
 

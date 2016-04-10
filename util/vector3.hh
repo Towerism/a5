@@ -1,0 +1,54 @@
+#pragma once
+
+#include <cmath>
+
+struct Vector3 {
+  float x, y, z;
+};
+
+inline Vector3 operator-(Vector3 vector3) {
+  return { -vector3.x, -vector3.y , -vector3.z};
+}
+
+inline bool operator==(Vector3 lhs, Vector3 rhs) {
+  return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z;
+}
+
+inline Vector3 operator-(Vector3 lhs, Vector3 rhs) {
+  return { lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z };
+}
+
+inline void operator-=(Vector3& lhs, Vector3 rhs) {
+  lhs = lhs - rhs;
+}
+
+inline void operator/=(Vector3& lhs, float rhs) {
+  lhs.x /= rhs; 
+  lhs.y /= rhs; 
+  lhs.z /= rhs; 
+}
+
+inline float magnitude(Vector3 vector) {
+  return sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
+}
+
+inline Vector3 cross(Vector3 u, Vector3 v) {
+  Vector3 result;
+
+  result.x = u.y * v.z - u.z * v.y;
+  result.y = u.z * v.x - u.x * v.z;
+  result.z = u.x * v.y - u.y * v.x;
+
+  return result;
+}
+
+inline Vector3 normalize(Vector3 vector) {
+  float mag = magnitude(vector);
+  Vector3 result = vector;
+  if (mag > 0)
+    result /= mag;
+  else
+    result = { 0, 0, 0 };
+  return result;
+}
+

@@ -4,7 +4,7 @@ OBJS := $(SRCS:.cc=.o)
 DEPS := $(OBJS:.o=.d)
 EXEC ?= main
 
-CXXFLAGS ?= -std=c++14 -Wall --pedantic -I.
+CXXFLAGS ?= -std=c++14 -Wall --pedantic -I. -ggdb
 LDFLAGS ?= -lglut -lGL -lGLU
 CXX ?= g++
 RM ?= rm -rf
