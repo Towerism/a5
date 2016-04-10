@@ -8,10 +8,35 @@
 
 #pragma once
 
-struct Color {
-  float r, g, b;    // Color (R, G, B values)
+#include <iostream>
+#include <vector>
+
+#include "util/vector3.hh"
+#include "util/clamp.hh"
+
+class Color {
+public:
+  Color(std::initializer_list<float> rgb) : rgb(rgb), intensity{0, 0, 0} { std::cout << "CONSTRUCTED\n"; }
+
+  float red() {
+    return rgb[0] * intensity.x;
+  }
+  float green() {
+    return rgb[1] * intensity.y;
+  }
+  float blue() {
+    return rgb[2] * intensity.z;
+  }
+
+  void set_intensity(Vector3 value) {
+    intensity = clamp(0, 1, value);
+  }
+
+private:
+  std::vector<float> rgb;
+  Vector3 intensity;
 };
 
 bool operator==(Color lhs, Color rhs) {
-  return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b;
+  return lhs.red() == rhs.red() && lhs.green() == rhs.green() && lhs.blue() == rhs.blue();
 }

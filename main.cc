@@ -134,7 +134,7 @@ float clampFloat(float f) {
 
 // make sure color values are between 0 and 1
 Color clampColorValues(Color color) {
-  return { clampFloat(color.r), clampFloat(color.g), clampFloat(color.b) };
+  return { clampFloat(color.red()), clampFloat(color.green()), clampFloat(color.blue()) };
 }
 
 // Sets pixel x, y to the color RGB
@@ -149,9 +149,9 @@ void repositionOrigin(Vector2& position) {
 void setFramebuffer(Vector2 position, Color color) {
   // changes the origin from the lower-left corner to the upper-left corner
   repositionOrigin(position);
-  framebuffer[position.y][position.x][0] = color.r;
-  framebuffer[position.y][position.x][1] = color.g;
-  framebuffer[position.y][position.x][2] = color.b;
+  framebuffer[position.y][position.x][0] = color.red();
+  framebuffer[position.y][position.x][1] = color.green();
+  framebuffer[position.y][position.x][2] = color.blue();
 }
 
 void setZbuffer(Vector2 position, float depth) {
@@ -232,10 +232,11 @@ Vector3 getTriangleVertex(triangle tri, std::size_t vertex) {
 }
 
 Color randomColor() {
-  Color color;
-  color.r = distribution(generator);
-  color.g = distribution(generator);
-  color.b = distribution(generator);
+  Color color = {
+    distribution(generator),
+    distribution(generator),
+    distribution(generator)
+  };
   return color;
 }
 
@@ -243,7 +244,9 @@ void drawtriangle(triangle tri) {
   std::vector<Vector3> points = { getTriangleVertex(tri, 0),
                                   getTriangleVertex(tri, 1),
                                   getTriangleVertex(tri, 2) };
-  scanfill(points, randomColor());
+  Color random = randomColor();
+  random.set_intensity({ 1, 1, 1 });
+  scanfill(points, random);
 }
 
 void display(void)

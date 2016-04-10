@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+#include "util/clamp.hh"
+
 struct Vector3 {
   float x, y, z;
 };
@@ -52,3 +54,11 @@ inline Vector3 normalize(Vector3 vector) {
   return result;
 }
 
+inline Vector3 clamp(int min, int max, Vector3 vector) {
+  Vector3 result = {
+    clamp(min, max, vector.x),
+    clamp(min, max, vector.y),
+    clamp(min, max, vector.z)
+  };
+  return result;
+}
