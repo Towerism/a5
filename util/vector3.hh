@@ -24,6 +24,18 @@ inline void operator-=(Vector3& lhs, Vector3 rhs) {
   lhs = lhs - rhs;
 }
 
+inline Vector3 operator*(Vector3 lhs, float rhs) {
+  Vector3 result = lhs;
+  result.x *= rhs;
+  result.y *= rhs;
+  result.z *= rhs;
+  return result;
+}
+
+inline Vector3 operator*(float rhs, Vector3 lhs) {
+  return lhs * rhs;
+}
+
 inline void operator/=(Vector3& lhs, float rhs) {
   lhs.x /= rhs; 
   lhs.y /= rhs; 
@@ -32,6 +44,10 @@ inline void operator/=(Vector3& lhs, float rhs) {
 
 inline float magnitude(Vector3 vector) {
   return sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
+}
+
+inline float dot(Vector3 u, Vector3 v) {
+  return u.x * v.x + u.y * v.y + u.z * v.z;
 }
 
 inline Vector3 cross(Vector3 u, Vector3 v) {

@@ -164,23 +164,76 @@ int getDepth(Vector2 position) {
   return zbuffer[position.y][position.x];
 }
 
-void drawScanLine(int y, int startX, int endX, int startZ, Vector3 normal, Color color) {
-  // std::cout << "drawScanLineBEGIN!!!!!!!!!!!!!!" << std::endl;
-  float z = startZ;
-  // std::cout << "startZ: " << z << std::endl;
-  for (int x = startX; x < endX - 1; ++x, z -= normal.x / normal.z) {
-    // std::cout << "Z: " << z << ", ";
-    if (z < getDepth({x, y})) {
-      setZbuffer({x, y}, z);
-      setFramebuffer({x, y}, color);
-    } else {
-      // std::cout << "!! Z REJECTED: " << z << "!! ";
-    }
+Color calculateAndApplyIntensity(triangle tri, Vector3 normal, Color color) {
+  Color result = color;
+  Color intensity = { 0, 0, 0 };
+
+  Color ambient = { ambientlight.r, ambientlight.g, ambientlight.b };
+  Color diffuse = { 1, 1, 1 };
+  Color specular = { 1, 1, 1};
+
+  Color lightbrightness = { 0, 0, 0 };
+
+  Vector3 light;
+  Vector3 reflect;
+  Vector3 eye = { ImageW / 2, ImageH / 2, 0 };
+
+  ambient.set_intensity(tri.kamb);
+  intensity = intensity + ambient;
+
+  for (int i = 0; i < numlights; ++i) {
+
+    light = { lightlist[i].x, lightlist[i].y, lightlist[i].z };
+    light -= normal;
+    lightbrightness = { lightlist[i].brightness.r, lightlist[i].brightness.g, lightlist[i].brightness.b };
+    diffuse = lightbrightness;
+    specular = lightbrightness;
+
+    reflect = 2*dot(light, normal)*normal - light;
+
+    diffuse.set_intensity(tri.kdiff * dot(light, normal));
+    intensity = intensity + diffuse;
+
+    specular.set_intensity(tri.kspec * dot(reflect, eye));
+    intensity = intensity + specular;
+
   }
-  // std::cout << "\n!!!!!!!!!!!!!!drawScanLineEND" << std::endl;
+
+
+  result.set_intensity(intensity);
+  return result;
 }
 
-void scanfill(std::vector<Vector3> points, Color color) {
+void drawScanLine(int y, int startX, int endX, int startZ, Vector3 normal, triangle tri, Color color) {
+  float z = startZ;
+  for (int x = startX; x < endX - 1; ++x, z -= normal.x / normal.z) {
+    if (z < getDepth({x, y})) {
+      setZbuffer({x, y}, z);
+      color = calculateAndApplyIntensity(tri, normal, color);
+      setFramebuffer({x, y}, color);
+    }
+  }
+}
+
+Color randomColor() {
+  Color color = {
+    distribution(generator),
+    distribution(generator),
+    distribution(generator)
+  };
+  return color;
+}
+
+Vector3 getTriangleVertex(triangle tri, std::size_t vertex) {
+  return { tri.v[vertex].x, tri.v[vertex].y, tri.v[vertex].z };
+}
+
+void scanfill(triangle tri) {
+  std::vector<Vector3> points = { getTriangleVertex(tri, 0),
+                                  getTriangleVertex(tri, 1),
+                                  getTriangleVertex(tri, 2) };
+  Color random = randomColor();
+  random.set_intensity(Vector3{ 1, 1, 1 });
   std::list<Edge> edges = makeEdges(points);
   printEdges(edges);
   ActiveEdgeTable edgeTable = makeActiveEdgeTable(edges);
@@ -196,7 +249,8 @@ void scanfill(std::vector<Vector3> points, Color color) {
                    edgeList[i + 1].currentX,
                    edgeList[i].currentZ,
                    normal,
-                   color);
+                   tri,
+                   random);
     }
   }
 }
@@ -227,32 +281,10 @@ float angle(float x1, float y1, float z1, float x2, float y2, float z2) {
   return  acos(dot(x1,y1,z1,x2,y2,z2));
 }
 
-Vector3 getTriangleVertex(triangle tri, std::size_t vertex) {
-  return { tri.v[vertex].x, tri.v[vertex].y, tri.v[vertex].z };
-}
-
-Color randomColor() {
-  Color color = {
-    distribution(generator),
-    distribution(generator),
-    distribution(generator)
-  };
-  return color;
-}
-
-void drawtriangle(triangle tri) {
-  std::vector<Vector3> points = { getTriangleVertex(tri, 0),
-                                  getTriangleVertex(tri, 1),
-                                  getTriangleVertex(tri, 2) };
-  Color random = randomColor();
-  random.set_intensity({ 1, 1, 1 });
-  scanfill(points, random);
-}
-
 void display(void)
 {
   for (int i = 0; i < numtriangles; ++i) {
-    drawtriangle(trianglelist[i]);
+    scanfill(trianglelist[i]);
   }
 
   drawit();
@@ -299,7 +331,8 @@ void init(void)
   for(i=0;i<numlights;i++) {
     infile >> lightlist[i].x >> lightlist[i].y >> lightlist[i].z;
     infile >> lightlist[i].brightness.r >> lightlist[i].brightness.g >> lightlist[i].brightness.b;
-  }
+  
+}
 
   // Now read textures
   texturelist = new texture[numtextures];

@@ -16,7 +16,7 @@
 
 class Color {
 public:
-  Color(std::initializer_list<float> rgb) : rgb(rgb), intensity{0, 0, 0} { std::cout << "CONSTRUCTED\n"; }
+  Color(std::initializer_list<float> rgb) : rgb(rgb), intensity{0, 0, 0} {}
 
   float red() {
     return rgb[0] * intensity.x;
@@ -30,6 +30,24 @@ public:
 
   void set_intensity(Vector3 value) {
     intensity = clamp(0, 1, value);
+  }
+
+  void set_intensity(float value) {
+    set_intensity(Vector3{ value, value, value });
+  }
+
+  void set_intensity(Color value) {
+    set_intensity(Vector3{ value.red(), value.green(), value.blue()});
+  }
+
+  Color operator+(Color other) {
+    Color result = {
+      red() + other.red(),
+      green() + other.green(),
+      blue() + other.blue()
+    };
+    result.set_intensity(1);
+    return result;
   }
 
 private:
