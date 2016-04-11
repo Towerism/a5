@@ -194,7 +194,7 @@ Color calculateAndApplyIntensity(triangle tri, Vector3 normal, Color color) {
     diffuse.set_intensity(tri.kdiff * dot(light, normal));
     intensity = intensity + diffuse;
 
-    specular.set_intensity(tri.kspec * dot(reflect, eye));
+    specular.set_intensity(tri.kspec * pow(dot(reflect, eye), tri.shininess));
     intensity = intensity + specular;
 
   }
