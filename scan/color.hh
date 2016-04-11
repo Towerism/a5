@@ -40,6 +40,8 @@ public:
     set_intensity(Vector3{ value.red(), value.green(), value.blue()});
   }
 
+  Vector3 get_intensity() const { return intensity; }
+
   Color operator+(Color other) {
     Color result = {
       red() + other.red(),

@@ -24,6 +24,10 @@ inline void operator-=(Vector3& lhs, Vector3 rhs) {
   lhs = lhs - rhs;
 }
 
+inline Vector3 operator+(Vector3 lhs, Vector3 rhs) {
+  return lhs - (-rhs);
+}
+
 inline Vector3 operator*(Vector3 lhs, float rhs) {
   Vector3 result = lhs;
   result.x *= rhs;
@@ -34,6 +38,10 @@ inline Vector3 operator*(Vector3 lhs, float rhs) {
 
 inline Vector3 operator*(float rhs, Vector3 lhs) {
   return lhs * rhs;
+}
+
+inline Vector3 operator/(Vector3 lhs, float rhs) {
+  return lhs * (1 / rhs);
 }
 
 inline void operator/=(Vector3& lhs, float rhs) {
