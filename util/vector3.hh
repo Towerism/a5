@@ -28,6 +28,10 @@ inline Vector3 operator+(Vector3 lhs, Vector3 rhs) {
   return lhs - (-rhs);
 }
 
+inline void operator+=(Vector3& lhs, Vector3 rhs) {
+  lhs = lhs + rhs;
+}
+
 inline Vector3 operator*(Vector3 lhs, float rhs) {
   Vector3 result = lhs;
   result.x *= rhs;

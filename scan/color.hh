@@ -52,6 +52,13 @@ public:
     return result;
   }
 
+  void operator+=(Color other) {
+    rgb[0] = red() + other.red();
+    rgb[1] = green() + other.green();
+    rgb[2] = blue() + other.blue();
+    set_intensity(1);
+  }
+
 private:
   std::vector<float> rgb;
   Vector3 intensity;

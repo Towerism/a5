@@ -14,6 +14,7 @@
 
 #include "color.hh"
 #include "edge.hh"
+#include "triangle.hh"
 #include "util/vector2.hh"
 #include "util/vector3.hh"
 
@@ -91,8 +92,47 @@ inline void applyNormal(std::list<Edge>& edges) {
   }
 }
 
-inline std::list<Edge> makeEdges(std::vector<Vector3> points) {
+inline Vector3 getTriangleVertex(triangle tri, std::size_t vertex) {
+  return { tri.v[vertex].x, tri.v[vertex].y, tri.v[vertex].z };
+}
+
+inline Vector3 getVertexNormFromTriangle(triangle tri, Vector3 reference) {
+  vertex v;
+  for (int i = 0; i < 3; ++i) {
+    v = tri.v[i];
+    if (v.x == reference.x &&
+        v.y == reference.y &&
+        v.z == reference.z)
+      return { v.nx, v.ny, v.nz };
+  }
+  return { 0, 0, 0 };
+}
+
+inline void setupNormalInterpolation(std::list<Edge>& edges, triangle tri) {
+  Vector3 start;
+  Vector3 end;
+  Vector3 startNormal;
+  Vector3 endNormal;
+  float deltaY;
+  for (auto& edge : edges) {
+    start = edge.start;
+    end = edge.end;
+    startNormal = getVertexNormFromTriangle(tri, start);
+    endNormal = getVertexNormFromTriangle(tri, end);
+    edge.currentN = startNormal;
+    deltaY = end.y - start.y;
+    if (deltaY != 0)
+      edge.deltaN = (endNormal - startNormal) / deltaY;
+    else
+      edge.deltaN = { 0, 0, 0 };
+  }
+}
+
+inline std::list<Edge> makeEdges(triangle tri) {
   std::list<Edge> edges;
+  std::vector<Vector3> points = { getTriangleVertex(tri, 0),
+                                  getTriangleVertex(tri, 1),
+                                  getTriangleVertex(tri, 2) };
   for (std::size_t i = 0; i < points.size(); ++i) {
     edges.push_back({ points[i] });
     if (i + 1 != points.size()) {
@@ -101,6 +141,7 @@ inline std::list<Edge> makeEdges(std::vector<Vector3> points) {
   }
   setEndPoint(edges.back(), points.front());
   applyNormal(edges);
+  setupNormalInterpolation(edges, tri);
   return edges;
 }
 

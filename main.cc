@@ -3,6 +3,7 @@
 #include "scan/color.hh"
 #include "scan/edge.hh"
 #include "scan/polygon.hh"
+#include "scan/triangle.hh"
 #include "util/vector2.hh"
 
 #include <algorithm>
@@ -55,24 +56,6 @@ std::string sourcefile="triangle.dat";
 
 struct color {
   float r, g, b;
-};
-
-struct vertex {
-  float x,y,z;		// x, y, z coordinates
-  float nx,ny,nz;		// Normal at the vertex
-  float u,v;			// Texture coordinates
-};
-
-struct triangle {
-  int whichtexture;	// The index number of the corresponding texture to apply
-  // Note: Use the color returned by the texture for the
-  // ambient, diffuse, and specular color, scaled by the
-  // coefficients of ambient, diffuse, and specular reflection
-  vertex v[3];		// The three vertices
-  float kamb;			// The coefficient of ambient reflection
-  float kdiff;		// The coefficient of diffuse reflection
-  float kspec;		// The coefficient of specular reflection
-  int shininess;		// The exponent to use for Specular Phong Illumination
 };
 
 struct light {
@@ -164,7 +147,7 @@ int getDepth(Vector2 position) {
   return zbuffer[position.y][position.x];
 }
 
-Color calculateAndApplyIntensity(triangle tri, Vector3 normal, Color color) {
+Color calculateAndApplyIntensity(triangle tri, Vector3 normal, Vector3 eye, Color color) {
   Color result = color;
   Color intensity = { 0, 0, 0 };
 
@@ -176,7 +159,6 @@ Color calculateAndApplyIntensity(triangle tri, Vector3 normal, Color color) {
 
   Vector3 light;
   Vector3 reflect;
-  Vector3 eye = { ImageW / 2, ImageH / 2, 0 };
 
   ambient.set_intensity(tri.kamb);
   intensity = intensity + ambient;
@@ -189,13 +171,13 @@ Color calculateAndApplyIntensity(triangle tri, Vector3 normal, Color color) {
     diffuse = lightbrightness;
     specular = lightbrightness;
 
-    reflect = 2*dot(light, normal)*normal - light;
+    reflect = 2 * dot(light, normal) * normal - light;
 
     diffuse.set_intensity(tri.kdiff * dot(light, normal));
-    intensity = intensity + diffuse;
+    intensity += diffuse;
 
     specular.set_intensity(tri.kspec * pow(dot(reflect, eye), tri.shininess));
-    intensity = intensity + specular;
+    intensity += specular;
 
   }
 
@@ -204,14 +186,19 @@ Color calculateAndApplyIntensity(triangle tri, Vector3 normal, Color color) {
   return result;
 }
 
-void drawScanLine(int y, int startX, int endX, int startZ, Vector3 normal, triangle tri, Color color) {
+void drawScanLine(int y, int startX, int endX, int startZ, Vector3 surfaceNormal, Vector3 startNormal, Vector3 endNormal, Vector3 eye, triangle tri, Color color) {
   float z = startZ;
-  for (int x = startX; x < endX - 1; ++x, z -= normal.x / normal.z) {
+  float deltaX;
+  Vector3 currentN = startNormal;
+  for (int x = startX; x < endX - 1; ++x, z -= surfaceNormal.x / surfaceNormal.z) {
     if (z < getDepth({x, y})) {
       setZbuffer({x, y}, z);
-      color = calculateAndApplyIntensity(tri, normal, color);
+      color = calculateAndApplyIntensity(tri, currentN, eye, color);
       setFramebuffer({x, y}, color);
     }
+    deltaX = endX - startX;
+    if (deltaX != 0)
+      currentN += (endNormal - startNormal) / deltaX;
   }
 }
 
@@ -224,17 +211,10 @@ Color randomColor() {
   return color;
 }
 
-Vector3 getTriangleVertex(triangle tri, std::size_t vertex) {
-  return { tri.v[vertex].x, tri.v[vertex].y, tri.v[vertex].z };
-}
-
 void scanfill(triangle tri) {
-  std::vector<Vector3> points = { getTriangleVertex(tri, 0),
-                                  getTriangleVertex(tri, 1),
-                                  getTriangleVertex(tri, 2) };
   Color random = randomColor();
   random.set_intensity(Vector3{ 1, 1, 1 });
-  std::list<Edge> edges = makeEdges(points);
+  std::list<Edge> edges = makeEdges(tri);
   printEdges(edges);
   ActiveEdgeTable edgeTable = makeActiveEdgeTable(edges);
   ActiveEdgeList edgeList(findMinYFromEdges(edges));
@@ -249,6 +229,9 @@ void scanfill(triangle tri) {
                    edgeList[i + 1].currentX,
                    edgeList[i].currentZ,
                    normal,
+                   edgeList[i].currentN,
+                   edgeList[i + 1].currentN,
+                   { ImageW / 2, ImageH / 2, 0 },
                    tri,
                    random);
     }

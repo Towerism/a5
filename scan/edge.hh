@@ -17,6 +17,7 @@ struct Edge {
   Vector3 end;
   int maxY;
   float currentX, xIncr, currentZ, zIncr;
+  Vector3 currentN, deltaN;
 };
 
 template <typename iterable>
@@ -31,6 +32,8 @@ void printEdges(iterable edges) {
     std::cout << "    XINCR: " << edge.xIncr << std::endl;
     std::cout << "    CURRENTZ: " << edge.currentZ << std::endl;
     std::cout << "    ZINCR: " << edge.zIncr << std::endl;
+    std::cout << "    CURRENTN: ( " << edge.currentN.x << ", " << edge.currentN.y <<  ", " << edge.currentN.z <<" )" << std::endl;
+    std::cout << "    DELTAN: ( " << edge.deltaN.x << ", " << edge.deltaN.y << ", " << edge.deltaN.z << " )" << std::endl;
     std::cout << "  END EDGE" << std::endl;
   }
   std::cout << "END EDGES" << std::endl;

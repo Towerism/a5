@@ -56,6 +56,7 @@ private:
     for (auto& edge : edges) {
       edge.currentX += edge.xIncr;
       edge.currentZ += edge.zIncr;
+      edge.currentN += edge.deltaN;
     }
   }
 
