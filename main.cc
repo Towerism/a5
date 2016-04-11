@@ -217,9 +217,9 @@ void drawScanLine(int y, int startX, int endX, int startZ, Vector3 normal, trian
 
 Color randomColor() {
   Color color = {
-    distribution(generator),
-    distribution(generator),
-    distribution(generator)
+    1.0,
+    1.0,
+    1.0
   };
   return color;
 }
