@@ -149,36 +149,36 @@ int getDepth(Vector2 position) {
 
 Color calculateAndApplyIntensity(triangle tri, Vector3 normal, Vector3 eye, Color color) {
   Color result = color;
-  Color intensity = { 0, 0, 0 };
+  Vector3 intensity = { 0, 0, 0 };
 
-  Color ambient = { ambientlight.r, ambientlight.g, ambientlight.b };
-  Color diffuse = { 1, 1, 1 };
-  Color specular = { 1, 1, 1};
+  Vector3 ambient = { ambientlight.r, ambientlight.g, ambientlight.b };
+  Vector3 diffuse = { 1, 1, 1 };
+  Vector3 specular = { 1, 1, 1 };
 
-  Color lightbrightness = { 0, 0, 0 };
+  Vector3 lightbrightness = { 0, 0, 0 };
 
   Vector3 light;
   Vector3 reflect;
 
-  ambient.set_intensity(tri.kamb);
-  intensity = intensity + ambient;
+  ambient *= tri.kamb;
+  intensity += ambient;
+
+  eye = normalize(eye);
 
   for (int i = 0; i < numlights; ++i) {
 
     light = { lightlist[i].x, lightlist[i].y, lightlist[i].z };
     light -= normal;
+    light = normalize(light);
     lightbrightness = { lightlist[i].brightness.r, lightlist[i].brightness.g, lightlist[i].brightness.b };
     diffuse = lightbrightness;
     specular = lightbrightness;
-
     reflect = 2 * dot(light, normal) * normal - light;
 
-    diffuse.set_intensity(tri.kdiff * dot(light, normal));
-    intensity += diffuse;
+    diffuse *= tri.kdiff * dot(light, normal);
+    specular *= tri.kspec * pow(dot(reflect, eye), tri.shininess);
 
-    specular.set_intensity(tri.kspec * pow(dot(reflect, eye), tri.shininess));
-    intensity += specular;
-
+      intensity += specular + diffuse;
   }
 
 
@@ -340,7 +340,7 @@ int main(int argc, char** argv)
   glutInitDisplayMode(GLUT_SINGLE|GLUT_RGB);
   glutInitWindowSize(ImageW,ImageH);
   glutInitWindowPosition(100,100);
-  glutCreateWindow("Homework 7");
+  glutCreateWindow("Martin Fracker - Assignment 5");
   init();	
   glutDisplayFunc(display);
   glutMainLoop();

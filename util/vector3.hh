@@ -40,6 +40,12 @@ inline Vector3 operator*(Vector3 lhs, float rhs) {
   return result;
 }
 
+inline void operator*=(Vector3& lhs, float rhs) {
+  lhs.x *= rhs;
+  lhs.y *= rhs;
+  lhs.z *= rhs;
+}
+
 inline Vector3 operator*(float rhs, Vector3 lhs) {
   return lhs * rhs;
 }
