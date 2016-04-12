@@ -13,11 +13,11 @@
 #include "util/vector3.hh"
 
 struct Edge {
-  Vector3 start;
-  Vector3 end;
+  Vector3 start, end;
   int maxY;
   float currentX, xIncr, currentZ, zIncr;
   Vector3 currentN, deltaN;
+  Vector3 currentUV, deltaUV;
 };
 
 template <typename iterable>

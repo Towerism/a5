@@ -186,19 +186,32 @@ Color calculateAndApplyIntensity(triangle tri, Vector3 normal, Vector3 eye, Colo
   return result;
 }
 
-void drawScanLine(int y, int startX, int endX, int startZ, Vector3 surfaceNormal, Vector3 startNormal, Vector3 endNormal, Vector3 eye, triangle tri, Color color) {
+Color calculateAndApplyTextureUVs(triangle tri, Vector3 uv) {
+  float x, y, z;
+  getTextureRGB(texturelist + tri.whichtexture, uv.x, uv.y, x, y, z);
+
+  return { x, y, z };
+}
+
+void drawScanLine(int y, int startX, int endX, int startZ, Vector3 startUV, Vector3 endUV,
+                  Vector3 surfaceNormal, Vector3 startNormal, Vector3 endNormal,
+                  Vector3 eye, triangle tri, Color color) {
   float z = startZ;
   float deltaX;
   Vector3 currentN = startNormal;
+  Vector3 currentUV = startUV;
   for (int x = startX; x < endX - 1; ++x, z -= surfaceNormal.x / surfaceNormal.z) {
     if (z < getDepth({x, y})) {
       setZbuffer({x, y}, z);
+      color = calculateAndApplyTextureUVs(tri, currentUV);
       color = calculateAndApplyIntensity(tri, currentN, eye, color);
       setFramebuffer({x, y}, color);
     }
     deltaX = endX - startX;
-    if (deltaX != 0)
+    if (deltaX != 0) {
       currentN += (endNormal - startNormal) / deltaX;
+      currentUV += (endUV - startUV) / deltaX;
+    }
   }
 }
 
@@ -225,6 +238,8 @@ void scanfill(triangle tri) {
                    edgeList[i].currentX,
                    edgeList[i + 1].currentX,
                    edgeList[i].currentZ,
+                   edgeList[i].currentUV,
+                   edgeList[i + 1].currentUV,
                    normal,
                    edgeList[i].currentN,
                    edgeList[i + 1].currentN,

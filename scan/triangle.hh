@@ -25,3 +25,31 @@ struct triangle {
   float kspec;		// The coefficient of specular reflection
   int shininess;		// The exponent to use for Specular Phong Illumination
 };
+
+inline Vector3 getTriangleVertex(triangle tri, std::size_t vertex) {
+  return { tri.v[vertex].x, tri.v[vertex].y, tri.v[vertex].z };
+}
+
+inline Vector3 getVertexNormFromTriangle(triangle tri, Vector3 reference) {
+  vertex v;
+  for (int i = 0; i < 3; ++i) {
+    v = tri.v[i];
+    if (v.x == reference.x &&
+        v.y == reference.y &&
+        v.z == reference.z)
+      return { v.nx, v.ny, v.nz };
+  }
+  return { 0, 0, 0 };
+}
+
+inline Vector3 getVertexUVsFromTriangle(triangle tri, Vector3 reference) {
+  vertex v;
+  for (int i = 0; i < 3; ++i) {
+    v = tri.v[i];
+    if (v.x == reference.x &&
+        v.y == reference.y &&
+        v.z == reference.z)
+      return { v.u, v.v, 0 };
+  }
+  return { 0, 0, 0 };
+}
