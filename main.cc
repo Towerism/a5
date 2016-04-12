@@ -215,12 +215,9 @@ void scanfill(triangle tri) {
   Color random = randomColor();
   random.set_intensity(Vector3{ 1, 1, 1 });
   std::list<Edge> edges = makeEdges(tri);
-  printEdges(edges);
   ActiveEdgeTable edgeTable = makeActiveEdgeTable(edges);
   ActiveEdgeList edgeList(findMinYFromEdges(edges));
   Vector3 normal = calculateNormal(edges);
-  std::cout << "Normal: " << normal.x
-            << ", " << normal.y << ", " << normal.z << std::endl;
   for (auto list : edgeTable) {
     edgeList.add(list);
     for (std::size_t i = 0; i < edgeList.size(); i += 2) {
