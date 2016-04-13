@@ -178,11 +178,11 @@ Color calculateAndApplyIntensity(triangle tri, Vector3 pixel, Vector3 normal, Ve
     specular = lightbrightness;
     lightcos = fmax(0, dot(light, normal));
     reflect = normalize(2 * lightcos * normal - light);
-    reflectcos = dot(reflect, eye);
+    reflectcos = fmax(0, dot(reflect, eye));
 
     diffuse *= tri.kdiff * lightcos;
     specular *= tri.kspec * pow(reflectcos, tri.shininess);
-    if (lightcos == 0 || reflectcos <= 0)
+    if (lightcos == 0)
       specular = 0;
 
     intensity += diffuse + specular;
