@@ -1,0 +1,30 @@
+#+TITLE: CSCE 441 Assignment 5
+#+AUTHOR: Martin Fracker
+* Checklist
+- Scan Conversion
+- Z-buffering
+- Phong Shading with Phong Lighting Model
+- Texture Mapping
+* Platform
+- Program written and tested on Linux 64-bit.
+- Requires a c++14 compatible compiler
+* Makefile
+Written for GCC on *nix platforms. Requires libglut, libGL, and libGLU to be in
+$PATH
+** Changing compile and linking flags
+The Makefile can set the environment variables automatically but only if they
+are not previously exported. If the Makefile seems to be broken, one or all of
+the environment variables probably need to be re-exported.
+#+BEGIN_SRC
+$ export CXXFLAGS=-std=c++14 -I.
+$ export LDFLAGS=-lglut -lGL -lGLU
+$ export CXX=g++
+$ make all
+#+END_SRC
+** Running
+Run ~./main~ if it exists otherwise it must be compiled. See above if there are
+compiler errors.
+#+BEGIN_SRC
+$ make all
+$ ./main
+#+END_SRC
