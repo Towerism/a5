@@ -168,6 +168,7 @@ Color calculateAndApplyIntensity(triangle tri, Vector3 pixel, Vector3 normal, Ve
   intensity += ambient;
 
   eye = normalize(eye - pixel);
+  normal = normalize(normal);
 
   for (int i = 0; i < numlights; ++i) {
     light = { lightlist[i].x, lightlist[i].y, lightlist[i].z };
