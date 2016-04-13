@@ -195,12 +195,13 @@ Color calculateAndApplyTextureUVs(triangle tri, Vector3 uv) {
 
 void drawScanLine(int y, int startX, int endX, int startZ, Vector3 startUV, Vector3 endUV,
                   Vector3 surfaceNormal, Vector3 startNormal, Vector3 endNormal,
-                  Vector3 eye, triangle tri, Color color) {
+                  Vector3 eye, triangle tri) {
+  Color color = { 0, 0, 0 };
   float z = startZ;
   float deltaX;
   Vector3 currentN = startNormal;
   Vector3 currentUV = startUV;
-  for (int x = startX; x < endX - 1; ++x, z -= surfaceNormal.x / surfaceNormal.z) {
+  for (int x = startX; x < endX; ++x) {
     if (z < getDepth({x, y})) {
       setZbuffer({x, y}, z);
       color = calculateAndApplyTextureUVs(tri, currentUV);
@@ -212,25 +213,18 @@ void drawScanLine(int y, int startX, int endX, int startZ, Vector3 startUV, Vect
       currentN += (endNormal - startNormal) / deltaX;
       currentUV += (endUV - startUV) / deltaX;
     }
+    if (surfaceNormal.z != 0) {
+      z -= surfaceNormal.x / surfaceNormal.z;
+    }
   }
 }
 
-Color randomColor() {
-  Color color = {
-    1.0,
-    1.0,
-    1.0
-  };
-  return color;
-}
-
 void scanfill(triangle tri) {
-  Color random = randomColor();
-  random.set_intensity(Vector3{ 1, 1, 1 });
   std::list<Edge> edges = makeEdges(tri);
   ActiveEdgeTable edgeTable = makeActiveEdgeTable(edges);
   ActiveEdgeList edgeList(findMinYFromEdges(edges));
-  Vector3 normal = calculateNormal(edges);
+  Vector3 normal = calculateNormal(edges, tri);
+  printEdges(edges);
   for (auto list : edgeTable) {
     edgeList.add(list);
     for (std::size_t i = 0; i < edgeList.size(); i += 2) {
@@ -244,8 +238,7 @@ void scanfill(triangle tri) {
                    edgeList[i].currentN,
                    edgeList[i + 1].currentN,
                    { ImageW / 2, ImageH / 2, 0 },
-                   tri,
-                   random);
+                   tri);
     }
   }
 }

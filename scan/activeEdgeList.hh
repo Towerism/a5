@@ -45,7 +45,7 @@ private:
 
   void prune() {
     for (auto it = edges.begin(); it != edges.end();) {
-      if (it->end.y == currentY || it->start.y == it->end.y)
+      if (it->end.y < currentY || it->start.y == it->end.y)
         it = edges.erase(it);
       else
         ++it;
@@ -57,6 +57,7 @@ private:
       edge.currentX += edge.xIncr;
       edge.currentZ += edge.zIncr;
       edge.currentN += edge.deltaN;
+      edge.currentUV += edge.deltaUV;
     }
   }
 

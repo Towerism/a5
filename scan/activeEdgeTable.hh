@@ -57,15 +57,19 @@ inline void makeStartBelowEnd(Edge& edge) {
 inline void calculateXIncr(Edge& edge) {
   float deltaY = edge.end.y - edge.start.y;
   float deltaX = edge.end.x - edge.start.x;
-  edge.xIncr = deltaX / deltaY;
+  if (deltaY != 0)
+    edge.xIncr = deltaX / deltaY;
+  else
+    edge.xIncr = 0;
 }
 
-inline Vector3 calculateNormal(std::list<Edge> edges) {
-  auto iter = edges.begin();
-  Vector3 vertex1 = iter->start;
-  Vector3 vertex2 = iter->end;
-  ++iter;
-  Vector3 vertex3 = iter->end;
+inline Vector3 calculateNormal(std::list<Edge> edges, triangle tri) {
+  vertex v1 = tri.v[0];
+  vertex v2 = tri.v[1];
+  vertex v3 = tri.v[2];
+  Vector3 vertex1 = { v1.x, v1.y, v1.z };
+  Vector3 vertex2 = { v2.x, v2.y, v2.z };
+  Vector3 vertex3 = { v3.x, v3.y, v3.z };
 
   Vector3 u = vertex3 - vertex1;
   Vector3 v = vertex2 - vertex1;
@@ -81,11 +85,15 @@ inline void setEndPoint(Edge& edge, Vector3 point) {
 }
 
 inline void calculateZIncr(Edge& edge, Vector3 normal) {
-  edge.zIncr = -normal.y / normal.z;
+  if (normal.z != 0)
+    edge.zIncr = -normal.y / normal.z;
+  else
+    edge.zIncr = 0;
 }
 
-inline void applyNormal(std::list<Edge>& edges) {
-  Vector3 normal = calculateNormal(edges);
+inline void applyNormal(std::list<Edge>& edges, triangle tri) {
+  Vector3 normal = calculateNormal(edges, tri);
+  std::cout << "Normal: " << normal.x << " " << normal.y << " " << normal.z << std::endl;
   for (auto& edge : edges) {
     calculateZIncr(edge, normal);
     edge.currentZ = edge.start.z;
@@ -144,7 +152,7 @@ inline std::list<Edge> makeEdges(triangle tri) {
     }
   }
   setEndPoint(edges.back(), points.front());
-  applyNormal(edges);
+  applyNormal(edges, tri);
   setupNormalInterpolation(edges, tri);
   setupUVInterpolation(edges, tri);
   return edges;
