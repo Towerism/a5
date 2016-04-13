@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <cassert>
 #include <cmath>
 #include <vector>
 #include <list>
@@ -93,7 +94,6 @@ inline void calculateZIncr(Edge& edge, Vector3 normal) {
 
 inline void applyNormal(std::list<Edge>& edges, triangle tri) {
   Vector3 normal = calculateNormal(edges, tri);
-  std::cout << "Normal: " << normal.x << " " << normal.y << " " << normal.z << std::endl;
   for (auto& edge : edges) {
     calculateZIncr(edge, normal);
     edge.currentZ = edge.start.z;

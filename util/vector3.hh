@@ -6,6 +6,12 @@
 
 struct Vector3 {
   float x, y, z;
+
+  void operator=(float value) {
+    x = value;
+    y = value;
+    z = value;
+  }
 };
 
 inline Vector3 operator-(Vector3 vector3) {
@@ -14,6 +20,14 @@ inline Vector3 operator-(Vector3 vector3) {
 
 inline bool operator==(Vector3 lhs, Vector3 rhs) {
   return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z;
+}
+
+inline bool operator==(Vector3 lhs, float rhs) {
+  return lhs == Vector3{ rhs, rhs, rhs };
+}
+
+inline bool operator<=(Vector3 lhs, float rhs) {
+  return lhs.x <= rhs && lhs.y <= rhs && lhs.z <= rhs;
 }
 
 inline Vector3 operator-(Vector3 lhs, Vector3 rhs) {

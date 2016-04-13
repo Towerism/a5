@@ -125,8 +125,10 @@ Color clampColorValues(Color color) {
 // those returned by the glutMouseFunc exactly - Scott Schaefer 
 // Made the function less ugly - Martin Fracker
 
+// repositioning the origin is inappropriate for the triangle data given
+// for this assignment
 void repositionOrigin(Vector2& position) {
-  position.y = ImageH - 1 - position.y;
+  // position.y = ImageH - 1 - position.y;
 }
 
 void setFramebuffer(Vector2 position, Color color) {
@@ -147,38 +149,42 @@ int getDepth(Vector2 position) {
   return zbuffer[position.y][position.x];
 }
 
-Color calculateAndApplyIntensity(triangle tri, Vector3 normal, Vector3 eye, Color color) {
+Color calculateAndApplyIntensity(triangle tri, Vector3 pixel, Vector3 normal, Vector3 eye, Color color) {
   Color result = color;
-  Vector3 intensity = { 0, 0, 0 };
+  Vector3 intensity;
 
   Vector3 ambient = { ambientlight.r, ambientlight.g, ambientlight.b };
-  Vector3 diffuse = { 1, 1, 1 };
-  Vector3 specular = { 1, 1, 1 };
+  Vector3 diffuse;
+  Vector3 specular;
 
-  Vector3 lightbrightness = { 0, 0, 0 };
+  Vector3 lightbrightness;
+  float lightcos;
 
   Vector3 light;
   Vector3 reflect;
+  float reflectcos;
 
   ambient *= tri.kamb;
   intensity += ambient;
 
-  eye = normalize(eye);
+  eye = normalize(eye - pixel);
 
   for (int i = 0; i < numlights; ++i) {
-
     light = { lightlist[i].x, lightlist[i].y, lightlist[i].z };
-    light -= normal;
-    light = normalize(light);
+    light = normalize(light - pixel);
     lightbrightness = { lightlist[i].brightness.r, lightlist[i].brightness.g, lightlist[i].brightness.b };
     diffuse = lightbrightness;
     specular = lightbrightness;
-    reflect = 2 * dot(light, normal) * normal - light;
+    lightcos = fmax(0, dot(light, normal));
+    reflect = normalize(2 * lightcos * normal - light);
+    reflectcos = dot(reflect, eye);
 
-    diffuse *= tri.kdiff * dot(light, normal);
-    specular *= tri.kspec * pow(dot(reflect, eye), tri.shininess);
+    diffuse *= tri.kdiff * lightcos;
+    specular *= tri.kspec * pow(reflectcos, tri.shininess);
+    if (lightcos == 0 || reflectcos <= 0)
+      specular = 0;
 
-      intensity += specular + diffuse;
+    intensity += diffuse + specular;
   }
 
 
@@ -198,23 +204,29 @@ void drawScanLine(int y, int startX, int endX, int startZ, Vector3 startUV, Vect
                   Vector3 eye, triangle tri) {
   Color color = { 0, 0, 0 };
   float z = startZ;
-  float deltaX;
+  float rangeX = endX - startX;
+  float deltaZ = surfaceNormal.x / surfaceNormal.z;
+  Vector3 rangeN = endNormal - startNormal;
+  Vector3 rangeUV = endUV - startUV;
+  Vector3 deltaN = rangeN / rangeX;
+  Vector3 deltaUV = rangeUV / rangeX;
   Vector3 currentN = startNormal;
   Vector3 currentUV = startUV;
+  Vector3 pixel = { 0, 0, 0 };
   for (int x = startX; x < endX; ++x) {
+    pixel = { (float)x, (float)y, (float)z };
     if (z < getDepth({x, y})) {
       setZbuffer({x, y}, z);
       color = calculateAndApplyTextureUVs(tri, currentUV);
-      color = calculateAndApplyIntensity(tri, currentN, eye, color);
+      color = calculateAndApplyIntensity(tri, pixel, currentN, eye, color);
       setFramebuffer({x, y}, color);
     }
-    deltaX = endX - startX;
-    if (deltaX != 0) {
-      currentN += (endNormal - startNormal) / deltaX;
-      currentUV += (endUV - startUV) / deltaX;
+    if (rangeX != 0) {
+      currentN += deltaN;
+      currentUV += deltaUV;
     }
     if (surfaceNormal.z != 0) {
-      z -= surfaceNormal.x / surfaceNormal.z;
+      z -= deltaZ;
     }
   }
 }
@@ -224,7 +236,6 @@ void scanfill(triangle tri) {
   ActiveEdgeTable edgeTable = makeActiveEdgeTable(edges);
   ActiveEdgeList edgeList(findMinYFromEdges(edges));
   Vector3 normal = calculateNormal(edges, tri);
-  printEdges(edges);
   for (auto list : edgeTable) {
     edgeList.add(list);
     for (std::size_t i = 0; i < edgeList.size(); i += 2) {
@@ -237,7 +248,7 @@ void scanfill(triangle tri) {
                    normal,
                    edgeList[i].currentN,
                    edgeList[i + 1].currentN,
-                   { ImageW / 2, ImageH / 2, 0 },
+                   { (float)ImageW / 2, (float)ImageH / 2, -ZMAX },
                    tri);
     }
   }
@@ -341,6 +352,9 @@ void init(void)
 
 int main(int argc, char** argv)
 {
+  if (argc >= 2) {
+    sourcefile = std::string(argv[1]);
+  }
   glutInit(&argc,argv);
   glutInitDisplayMode(GLUT_SINGLE|GLUT_RGB);
   glutInitWindowSize(ImageW,ImageH);
